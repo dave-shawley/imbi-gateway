@@ -16,6 +16,9 @@ dependencies = [
   "uvicorn[standard]>=0.40.0",
 ]
 
+[project.scripts]
+imbi-gateway = "imbi_gateway.entrypoint:cli"
+
 [dependency-groups]
 dev = [
   "basedpyright>=1.37.1",
