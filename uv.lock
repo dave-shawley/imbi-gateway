@@ -411,7 +411,7 @@ wheels = [
 [[package]]
 name = "imbi-common"
 version = "0.1.0"
-source = { editable = "../imbi-common" }
+source = { git = "https://github.com/AWeber-Imbi/imbi-common?rev=main#0a80bd28f776db12e0ac978886b6ef18bde40326" }
 dependencies = [
     { name = "argon2-cffi" },
     { name = "clickhouse-connect" },
@@ -424,47 +424,6 @@ dependencies = [
     { name = "pydantic-settings" },
     { name = "pyjwt" },
     { name = "python-slugify" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "argon2-cffi", specifier = ">=25.1.0" },
-    { name = "clickhouse-connect" },
-    { name = "cryptography", specifier = ">=42.0.4" },
-    { name = "cypherantic", git = "https://github.com/gmr/cypherantic.git" },
-    { name = "jsonschema-models" },
-    { name = "neo4j" },
-    { name = "orjson" },
-    { name = "pydantic", extras = ["email"], specifier = ">=2.0" },
-    { name = "pydantic-settings" },
-    { name = "pyjwt", specifier = ">=2.10.1" },
-    { name = "python-slugify" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "basedpyright" },
-    { name = "build" },
-    { name = "coverage", extras = ["toml"] },
-    { name = "httpx" },
-    { name = "mypy", specifier = "~=1.19.1" },
-    { name = "pre-commit" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "ruff", specifier = "~=0.14.6" },
-    { name = "sentry-sdk", specifier = ">=2.48.0" },
-]
-dist = [
-    { name = "build" },
-    { name = "twine" },
-    { name = "wheel" },
-]
-docs = [
-    { name = "griffe-pydantic" },
-    { name = "mkdocs", specifier = ">=1.5,<2" },
-    { name = "mkdocs-material", specifier = ">9.5,<10" },
-    { name = "mkdocstrings", extras = ["python"] },
-    { name = "mkdocstrings-python-xref", specifier = ">=1.6,<2" },
 ]
 
 [[package]]
@@ -494,7 +453,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "fastapi", specifier = ">=0.128.0" },
-    { name = "imbi-common", editable = "../imbi-common" },
+    { name = "imbi-common", git = "https://github.com/AWeber-Imbi/imbi-common?rev=main" },
     { name = "typer", specifier = ">=0.21.1" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.40.0" },
 ]
