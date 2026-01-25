@@ -1,0 +1,8 @@
+Metadata-Version: 2.4
+Name: peer-app
+Version: 0.0.0
+Requires-Dist: opentelemetry-distro==0.58b0
+Requires-Dist: opentelemetry-exporter-otlp==1.37.0
+Requires-Dist: opentelemetry-instrumentation-asyncio==0.58b0
+Requires-Dist: opentelemetry-instrumentation-fastapi==0.58b0
+Requires-Dist: uvicorn[standard]

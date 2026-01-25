@@ -7,22 +7,37 @@ services:
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
       - GF_AUTH_DISABLE_LOGIN_FORM=true
+      - GF_PANELS_DISABLE_SANITIZE_HTML=true
     depends_on:
       - jaeger
       - loki
       - prometheus
     volumes:
       - "./ci/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml"
+      - "./ci/grafana-dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml"
+      - "./ci/imbi-gateway-logs-dashboard.json:/etc/grafana/provisioning/dashboards/imbi-gateway-logs-dashboard.json"
   jaeger:
     image: jaegertracing/jaeger:2.14.0
     ports:
       - 4317 # /v1/traces: OTLP/HTTP ingest
       - 8888 # /metrics: prometheus metrics scraping
-      - 16686 # /api/v3/* - OTLP/HTTP query and UI
+      - 16686:16686 # /api/v3/* - OTLP/HTTP query and UI
   loki:
     image: grafana/loki:latest
     ports:
       - 3100
+  peer:
+    build: peer-service
+    ports:
+      - 8000
+    environment:
+      OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: "http://loki:3100/otlp/v1/logs"
+      OTEL_EXPORTER_OTLP_LOGS_PROTOCOL: "http/protobuf"
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "http://jaeger:4317"
+      OTEL_LOGS_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: none
+      OTEL_PROPAGATORS: baggage,tracecontext
+      OTEL_TRACES_EXPORTER: otlp
   prometheus:
     image: prom/prometheus:latest
     ports:

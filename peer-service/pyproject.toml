@@ -1,0 +1,13 @@
+[project]
+name = "peer-app"
+version = "0.0.0"
+requires-python = ">=3.14"
+dependencies = [
+  "fastapi",
+  "opentelemetry-distro==0.58b0",
+  "opentelemetry-exporter-otlp==1.37.0",
+  "opentelemetry-instrumentation-asyncio==0.58b0",
+  "opentelemetry-instrumentation-fastapi==0.58b0",
+  "opentelemetry-instrumentation-httpx==0.58b0",
+  "uvicorn[standard]"
+]

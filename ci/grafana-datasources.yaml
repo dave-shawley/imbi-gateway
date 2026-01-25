@@ -1,6 +1,7 @@
 apiVersion: 1
 datasources:
   - name: Jaeger
+    uid: jaeger
     type: jaeger
     access: proxy
     url: http://jaeger:16686
@@ -14,7 +15,12 @@ datasources:
         tags:
           - key: trace_id
             value: traceId
+      tracesToMetrics:
+        datasourceUid: prometheus
+        spanStartTimeShift: '-1h'
+        spanEndTimeShift: '1h'
   - name: Loki
+    uid: loki
     type: loki
     access: proxy
     url: http://loki:3100
@@ -22,6 +28,7 @@ datasources:
     jsonData:
       maxLines: 1000
   - name: Prometheus
+    uid: prometheus
     type: prometheus
     access: proxy
     url: http://prometheus:9090
