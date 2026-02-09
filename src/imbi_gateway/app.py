@@ -8,6 +8,7 @@ import typer
 from imbi_common import server
 
 import imbi_gateway
+from imbi_gateway import integrations, lifespan, postgres
 
 
 class Status(pydantic.BaseModel):
@@ -26,23 +27,32 @@ class Status(pydantic.BaseModel):
         pydantic.Field(description='Application version', examples=['0.0.0']),
     ]
     started_at: datetime.datetime
+    postgres: dict[str, int]
 
 
 def create_app() -> fastapi.FastAPI:
     app = fastapi.FastAPI(
+        lifespan=lifespan.Lifespan(postgres.lifespan_hook),
         version=imbi_gateway.version,
         started_at=datetime.datetime.now(datetime.UTC),
     )
+    app.include_router(integrations.router)
     app.add_api_route('/status', status_endpoint, summary='Operational status')
     return app
 
 
-def status_endpoint(*, request: fastapi.Request) -> Status:
+def status_endpoint(
+    *,
+    request: fastapi.Request,
+    context: lifespan.InjectLifespan,
+) -> Status:
+    pool = context.get_state(postgres.lifespan_hook)
     return Status(
         environment=os.environ.get('ENVIRONMENT', 'development'),
         status='ok',
         version=request.app.version,
         started_at=request.app.extra['started_at'],
+        postgres=pool.get_stats(),
     )
 
 
