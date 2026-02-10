@@ -12,18 +12,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
+      - name: Run linters in devcontainer
+        uses: devcontainers/ci@v0.3
         with:
-          enable-cache: true
-      - name: Install dependencies
-        run: uv sync --all-groups --all-extras --frozen
-      - name: Run pre-commit checks
-        run: uv run pre-commit run --all-files
-      - name: Check types
-        run: |
-          uv run basedpyright
-          uv run mypy
+          runCmd: |
+            uv run pre-commit run --all-files
+            uv run basedpyright
+            uv run mypy
 
   test:
     name: "Automated Tests"
@@ -35,12 +30,14 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
+      - name: Run tests in devcontainer
+        uses: devcontainers/ci@v0.3
         with:
-          enable-cache: true
-          python-version: ${{ matrix.python }}
-      - name: Run tests
+          push: never
+          imageName: ghcr.io/aweber-imbi/imbi-gateway
+          imageTag: python-${{ matrix.python }}
+          cacheFrom: ghcr.io/aweber-imbi/imbi-gateway
+          buildxPlatform: linux/amd64
+          runCmd: uv run pytest
         env:
-          UV_FROZEN: "1"
-        run: uv run pytest
+          PYTHON_VERSION: ${{ matrix.python }}
