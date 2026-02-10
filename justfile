@@ -1,59 +1,57 @@
-[doc("Bootstrap the environment and run the service in the foreground")]
-[group("Testing")]
-serve *ARGS:
-    -uv run imbi-gateway serve {{ARGS}}
+[private]
+devcontainer_exec := "devcontainer exec --workspace-folder ."
+[private]
+compose_project_name := "imbi-gateway-dev"
 
-# I would use [no-exit-message] here instead but it doesn't prevent a message
-# when I Ctrl+C the process (https://github.com/casey/just/issues/2895)
+[doc("Run service in the dev container")]
+[group("Testing")]
+serve *ARGS: devcontainer-up
+    -{{ devcontainer_exec }} uv run imbi-gateway serve --host=0.0.0.0 {{ ARGS }}
 
 [default]
 [private]
-ci: setup lint test
+ci: setup devcontainer-up lint test
 
-[doc("Set up your development environment")]
-[group("Environment")]
-setup: docker
+[private]
+setup:
     uv sync --all-groups --all-extras --frozen
     uv run pre-commit install --install-hooks --overwrite
 
-docker:
-    #!/usr/bin/env sh
-    set -e
-    get_port() {
-        if port="$(docker compose port "$@")"; then
-            echo "${port##*:}"
-            return 0
-        fi
-        echo "docker compose port $@ failed" >&2
-        return 1
-    }
-    docker compose up -d --wait || (docker compose logs && false)
-    pg_port=$(get_port postgres 5432)
-    test_host="${TEST_HOST:-127.0.0.1}"
-    cat>".env"<<-EOF
-    POSTGRES_URL="postgresql://postgres:secret@$test_host:$pg_port"
-    EOF
-
-[doc("Run tests")]
-[group("Testing")]
-test:
-    uv run pytest
-
 [doc("Run linters")]
 [group("Testing")]
-lint:
-    uv run pre-commit run --all-files
-    uv run basedpyright
-    uv run mypy
+lint: devcontainer-up
+    {{ devcontainer_exec }} uv run pre-commit run --all-files
+    {{ devcontainer_exec }} uv run basedpyright
+    {{ devcontainer_exec }} uv run mypy
 
-[doc("Remove runtime artifacts")]
+[doc("Run pytest with optional ARGS")]
+[group("Testing")]
+test *ARGS: devcontainer-up
+    {{ devcontainer_exec }} uv run pytest {{ ARGS }}
+
+[doc("Build the docker image")]
+[group("Testing")]
+build: setup
+    uv build --clear
+    docker build -t 'aweber/imbi-gateway:local' .
+
+[doc("Start the devcontainer")]
+[private]
+devcontainer-up:
+    devcontainer up --workspace-folder .
+
+[doc("Stop the devcontainer")]
 [group("Environment")]
-clean:
-    rm -f .coverage .env
-    rm -fR build
+down:
+    docker compose -p {{ compose_project_name }} down --remove-orphans --volumes
+
+[doc("Remove development artifacts")]
+[group("Environment")]
+clean: down
+    rm -fr .env build dist
 
 [confirm]
-[doc("Remove caches, virtual env, and output files")]
+[doc("Wipe out the development environment")]
 [group("Environment")]
 real-clean: clean
-    rm -fR .venv .*_cache dist
+    rm -fr .venv
