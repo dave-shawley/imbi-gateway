@@ -39,9 +39,7 @@ class SettingsFromEnvironmentTests(helpers.TestCase):
             pass
 
         with self.assertRaises(TypeError) as ctx:
-            imbi_gateway.helpers.settings_from_environment(
-                NotASettings  # type: ignore[arg-type]
-            )
+            imbi_gateway.helpers.settings_from_environment(NotASettings)  # type: ignore[type-var]
 
         self.assertIn('NotASettings', str(ctx.exception))
         self.assertIn('not a subclass of', str(ctx.exception))

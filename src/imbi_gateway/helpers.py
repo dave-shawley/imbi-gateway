@@ -33,7 +33,7 @@ def settings_from_environment[S: pydantic_settings.BaseSettings](
             constraints violations, etc.)
 
     """
-    if not issubclass(typ, pydantic_settings.BaseSettings):
+    if not issubclass(typ, pydantic_settings.BaseSettings):  # pyright: ignore[reportUnnecessaryIsInstance]
         raise TypeError(
             f'{typ.__name__} is not a subclass of '
             'pydantic_settings.BaseSettings'
