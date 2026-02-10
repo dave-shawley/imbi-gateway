@@ -1,0 +1,21 @@
+{
+  "name": "imbi-gateway",
+  "dockerComposeFile": "compose.yaml",
+  "service": "app",
+  "workspaceFolder": "/workspace",
+  "forwardPorts": [
+    8000,
+    5432
+  ],
+  "postCreateCommand": "uv sync --all-groups --all-extras --frozen && uv run pre-commit install --install-hooks --overwrite",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "python.defaultInterpreterPath": "/workspace/.venv/bin/python"
+      }
+    }
+  },
+  "containerEnv": {
+    "POSTGRES_URL": "postgresql://postgres:secret@postgres:5432/postgres"
+  }
+}

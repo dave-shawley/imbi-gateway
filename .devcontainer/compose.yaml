@@ -1,0 +1,47 @@
+# This sets the name of the docker compose project so that we can safely
+# depend on it elsewhere (eg, justfile)
+name: imbi-gateway-dev
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ 'CMD-SHELL', 'pg_isready -U postgres' ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    ports:
+      - 5432
+    networks:
+      - devcontainer
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PYTHON_VERSION: ${PYTHON_VERSION:-3.14}
+    command: sleep infinity
+    volumes:
+      - ../:/workspace:cached
+      - imbi-gateway-venv:/workspace/.venv
+      - imbi-gateway-build:/workspace/build
+    ports:
+      - 8000
+    networks:
+      - devcontainer
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+  imbi-gateway-venv:
+  imbi-gateway-build:
+
+networks:
+  devcontainer:
