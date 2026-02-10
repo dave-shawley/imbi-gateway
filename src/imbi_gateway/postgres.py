@@ -26,12 +26,7 @@ Configuration:
     See: https://www.postgresql.org/docs/current/libpq-connect.html
 
 Type Aliases:
-    - PoolType: AsyncConnectionPool instance
-    - ConnectionType: AsyncConnection instance
-    - CursorType: AsyncCursor instance
-    - PostgresPool: Annotated type for injecting pool
-    - PostgresConnection: Annotated type for injecting connection
-    - PostgresCursor: Annotated type for injecting cursor
+    - PostgresPool: Annotated type for injecting connection pool
 
 See Also:
     - src/imbi_gateway/lifespan.py for the lifespan pattern
@@ -48,7 +43,7 @@ import psycopg_pool
 import pydantic
 import pydantic_settings
 
-from imbi_gateway import lifespan
+from imbi_gateway import helpers, lifespan
 
 type RowType = psycopg.rows.DictRow
 type ConnectionType = psycopg.AsyncConnection[RowType]
@@ -86,23 +81,10 @@ async def postgres_lifespan() -> abc.AsyncIterator[PoolType]:
         pydantic.ValidationError: If POSTGRES_URL is missing or invalid.
         psycopg.OperationalError: If database connection fails.
 
-    Example:
-        ::
-
-            @contextlib.asynccontextmanager
-            async def postgres_lifespan() -> abc.AsyncIterator[PoolType]:
-                settings = Settings()
-                async with psycopg_pool.AsyncConnectionPool(
-                    conninfo=str(settings.url),
-                    open=False,
-                ) as pool:
-                    await pool.open(wait=True)
-                    yield pool
-
     See Also:
         Settings: Configuration from environment variables
     """
-    settings = Settings()  # type: ignore[call-arg]
+    settings = helpers.settings_from_environment(Settings)
     async with psycopg_pool.AsyncConnectionPool(
         conninfo=str(settings.url),
         configure=_configure_connection,
