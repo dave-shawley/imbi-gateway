@@ -15,35 +15,71 @@ Built with:
 
 ## Development Commands
 
-### Environment Setup
+### Primary Interface: `just`
+
+**All development tasks use `just` as the interface**, regardless of whether invoked by a human or automated process. The `justfile` automatically manages the devcontainer lifecycle and executes commands in the appropriate environment.
+
+### Devcontainer-First Workflow
+
+The project uses **devcontainers as the primary development environment**. The devcontainer provides:
+
+- **PostgreSQL 17 database** (accessible at `postgres:5432`, pre-configured via `POSTGRES_URL` environment variable)
+- **Isolated Python environment** with all dependencies installed via `uv`
+- **Named volumes** for `.venv` and `build/` to prevent cross-platform conflicts
+- **Automatic setup** on first start (dependencies, pre-commit hooks)
+
+**Local `.venv` exists for IDE support only** (code completion, linting in editors). All execution, testing, and linting happens in the container.
+
+### Common Commands
 
 ```bash
-just setup              # Set up development environment (install deps + pre-commit hooks)
+just test               # Run tests in devcontainer (auto-starts if needed)
+just lint               # Run linters in devcontainer
+just serve              # Run the service in devcontainer
+just down               # Stop and remove devcontainer
+just clean              # Stop devcontainer and remove artifacts
+just real-clean         # Remove everything including local .venv
 ```
 
-### Running the Service
+Run `just -l` to see all available commands with descriptions.
+
+### How It Works
+
+- **Automatic container management**: Commands like `just test` and `just lint` automatically start the devcontainer if not running
+- **Command execution**: The `justfile` uses `devcontainer exec` to run commands inside the container
+- **Workspace mounting**: Your local workspace is mounted at `/workspace` for live editing
+- **No manual setup needed**: The devcontainer's `postCreateCommand` handles dependency installation and hook setup
+
+### Maintaining the Devcontainer Stack
+
+When modifying the devcontainer configuration:
+
+**Key Files:**
+- `.devcontainer/devcontainer.json` - Main configuration (ports, environment, post-create commands)
+- `.devcontainer/compose.yaml` - Service definitions (app container, PostgreSQL)
+- `.devcontainer/Dockerfile` - Container image build (Python version, base image)
+
+**Important Patterns:**
+
+1. **Docker Compose Project Name**: Set to `imbi-gateway-dev` in `compose.yaml` for predictable service names
+2. **Named Volumes**: Use named volumes (`imbi-gateway-venv`, `imbi-gateway-build`) to persist state across rebuilds
+3. **Health Checks**: PostgreSQL has a health check; app service depends on `postgres:service_healthy`
+4. **Python Version**: Parameterized via `PYTHON_VERSION` build arg (defaults to 3.14)
+5. **Environment Variables**: Set `POSTGRES_URL` in `devcontainer.json` for connection configuration
+
+**Testing Configuration Changes:**
 
 ```bash
-just serve              # Run the service in the foreground
+just down               # Stop current devcontainer
+# Make changes to .devcontainer/*
+just test               # Auto-rebuilds and tests with new configuration
 ```
 
-### Testing
+**Rebuilding from Scratch:**
 
 ```bash
-just test               # Run all tests with coverage
-```
-
-### Linting and Type Checking
-
-```bash
-just lint               # Run all linters (pre-commit, basedpyright, mypy)
-```
-
-### Cleanup
-
-```bash
-just clean              # Remove runtime artifacts (.coverage, build/, etc.)
-just real-clean         # Remove everything including .venv and caches (requires confirmation)
+docker compose -p imbi-gateway-dev down --remove-orphans --volumes
+devcontainer up --workspace-folder . --build-no-cache
 ```
 
 ## Architecture
@@ -179,8 +215,10 @@ The Dockerfile uses a multi-stage build:
 GitHub Actions workflows:
 
 - **`.github/workflows/test.yml`**: Runs on push/PR
-    - Static analysis (pre-commit, basedpyright, mypy)
-    - Tests across Python 3.12, 3.13, 3.14
+    - Uses devcontainers/ci action for consistent test environment
+    - PostgreSQL automatically available via devcontainer compose
+    - Static analysis (pre-commit, basedpyright, mypy) runs in devcontainer
+    - Tests across Python 3.12, 3.13, 3.14 using matrix strategy with build args
 - **`.github/workflows/docker.yml`**: Runs on release
     - Builds Python wheel
     - Publishes multi-arch Docker image to ghcr.io
